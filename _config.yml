@@ -27,7 +27,7 @@ SNS: true
 SNS-icon: #['Facebook', 'weibo', 'qq', 'github', 'Dribbble', 'Twitter', 'instagram', 'weixin', 'Codepen']
   mail: '767039957@qq.com'
   weixin: '' # 你的微信二维码存放的地址
-  qq: 'http://wpa.qq.com/msgrd?v=3&uin='767039957'&site=qq&menu=yes'
+  qq: 'http://wpa.qq.com/msgrd?v=3&uin=767039957&site=qq&menu=yes'
   github: ''
   Codepen: ''
   weibo: ''
