@@ -5,8 +5,10 @@ date: 2019-12-30
 author: sf
 color: rgb(255,210,32)
 cover: 'http://on2171g4d.bkt.clouddn.com/jekyll-banner.png'
-tags: Paper-note
+tags: Paper-note performance locality
 ---
+    针对数据局部性做的hpctoolkit扩展，在几个地方做了优化提升了效率
+    
 # Abstract #
 识别出可以加强的数据局部行的地方很困难，我们通过扩展hpctoolkits完成了支持数据中心对数据的分析
 降低运行时间开销和空间开销
@@ -87,3 +89,47 @@ profiler 接受优化过得二进制文件
 
 
 ### Online call path profiler ###
+profiler 在运行时倍加在进入程序的地址空 （对于静态的可执行文件来说 
+，当程序执行的时候， profiler 就会开始采样，捕捉采样事件的全部上下文信息，追踪变量，或者使用 LD_PRELOAD 动态加载可执行文件，
+
++ Trigger samples 
+首先开启每个core's PMU 开始 instruction-based sampling，当 pmu 触发一个采样时间的时候 profiler  接受到信号，并且读取PMU 的寄存器解析对应的 performance metrics 
+
++ Capturing full calling contexts 
+hpctoolkit 解析每一个call stack at each sample event .使用在线算法定位每一个帧的返回地址，
+
+为了支持data-centric 分析需要进行两个改变 ： 
+首先我们要调整 cc的叶子节点， 避免 采样的指令 和 样本事件的偏移
+其次我们创建多重cct for each thread ,对于不同的sample feature 插入到不同的树中
+
++ Tracking varibles 
+static data. （ .bss 区中的数据 ， 每一个静态变量都有一个命名词条，指示了这个变量在内存中的位置。
+这种变量的加卸载和模块的加载卸载一致
+Heap-allocated data 这种数据是在堆上动态分配的，由malloc 类函数执行，
+
++ Unknown variable 
+C++ template 使用low level system call brk 分配内存，这个调用并不返回分配的范围，而是直接设置dtaasegment , 处于这种考虑， hpctoolkit 不追踪C++ template container allocations，栈变量同样被视为 unknow Variable，栈变量很少成为数据局部性的瓶颈。
+
+静态变量的检测使用的开销非常小，但是记录堆变量的开销是非常大的，我们有三种策略减小这种开支：
++ 我们不追踪所有的内存地址， 一般而言较大的内存数组更有可能局部性问题，我们简单的设置一个门开，小于该值的变量将不被记录 4K , 我们仍然会记录free 但是不记录cc ,所以开销并不大
+
++ 我们使用内联汇编直接读取指令的上下文信息，避免了堆栈的开销，我们的实现开销小于libc's  getcontext
+
++ 因为在较深的调用关系中记录调用栈信息是非常昂贵的，所以我们识别他们的最长公共前缀，提升效率。
+
+第一种办法导致了不准确我们只在必要的时候使用。其余两种总是使用
+
+### 关联所有的标准到变量 ###
+HPCToolkit  per-forms  data-centric  attribution  on-the-fly。
+首先创建三种不同的ccts ，记录不同类型的变量， static heap unknown 
+对于每一次采样， searches map of heap allocated variables using effective address
+"It is worth noting that the memory allocation call path may reside in a different thread than the one the PMU sample takes for an access" ??
+从其他的线程拷贝cp 是不需要所得， 因为cp是不可改变的。
+如果拷贝的cp已经在local thread cct 中了 ，九把他们联合起来
+
+这个cct 拷贝合并 的操作能够处理同循环内多重分配的问题 ， 如果发生了那种事庆， 实际上会被线上解决当作一个变量， 对不同变量的访问被区分为 variable's allocated paths 
+
+### analyze 和 合并GUI  ###
+略
+
+### case study ###
