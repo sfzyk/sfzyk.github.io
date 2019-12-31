@@ -77,5 +77,13 @@ intel Nehalm 处理器和之后的 Itanium 处理器也支持
 
 
 # 对于hpctoolkit的 data-centric 能力
+简化的流程图 analyzer profiler 
+三个主要部件
++ online call path profiler 
++ a post-mortem analyzer 
++ GUI
+
+profiler 接受优化过得二进制文件
 
 
+### Online call path profiler ###
