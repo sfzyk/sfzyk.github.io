@@ -52,3 +52,21 @@ inefficiencies :
 ... ... 
 
 witch 
+
+# Methodologt& Design #
+1 连续的存操作中是否中间有一个 加载操作
+2 连续的存操作中是否是相同的值
+3 连续的取操作是否是相同的值
+
+
+# 关键算法 # 
+就是一个等比抽样
+
+If a “never-again-to-be-accessed” address α finds a place in a watchpoint, it can affect the subsequent samples. If no watchpoint has triggered for H samples
+when α is sampled, the expected number of samples before
+α will be replaced is 1.7H
+这里这种不应该是无穷大吗，虽然和实际经验有些出入，但是这种特殊的分布没有期望？说expected number是为什么呢？ 自己做实验的结果？ 这种结果没有参考性啊
+
+ 只用等比抽样其实还是不行，  因为结果还取决于一些其他的量， 没有检测的值和其上下文相关的值 大概率是一样的？？？？，然后就要按照比例放缩一下？ 
+
+长尾效应，大部分的低效都在少数几个场景下
